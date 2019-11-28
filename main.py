@@ -23,7 +23,7 @@ def IEEE754_num(ieee754):
 	number, exponent = ieee754.split('e')
 	return float(number) * (10 ** int(exponent))
 
-def get_csv_as_matrix(filename):
+def getXY(filename):
 	X, Y = [], []
 	with open(filename, 'r') as file:
 		csv_reader = csv.reader(file, delimiter='\n')
@@ -108,7 +108,7 @@ def showAllFeaturePairs(X,Y, num_features):
 	plt.show()
 	pass
 
-def showAllFeatureTriples(X,Y):
+def showAllFeatureTriples(X, Y):
 	fig = plt.figure()
 	axs = fig.add_subplot(222, projection='3d')
 
@@ -117,21 +117,94 @@ def showAllFeatureTriples(X,Y):
 	axs.scatter(two_f1, two_f2, two_f3, c='r', marker="x")
 	plt.show()
 
+def squared_distance(sample, other, features):
+	#print(f"_distance :: {features} {len(sample)} {len(other)}")
+	squared_distance = 0
+	for i in features:
+		squared_distance += (sample[i] - other[i])**2
+	return squared_distance
+	#return np.linalg.norm(sample - other)
+
+def leave_one_out_cross_validation(X, Y, feature_indexes, potential_feature):
+	num_correct = 0
+	for i, sample in enumerate(X):
+		smallest_distance = math.inf
+		other_index = -1
+		for j, other in enumerate(X):
+			if i != j:
+				distance = squared_distance(X[i], X[j], feature_indexes+[potential_feature])
+				if distance < smallest_distance:
+					smallest_distance = distance
+					other_index = j
+				pass
+		if Y[i] == Y[other_index]:
+			num_correct += 1
+
+	return num_correct / np.shape(X)[0]
+	# return random.random()
+
+def feature_search_demo(X, Y):
+	num_features = np.shape(X)[1]
+	best_features = []
+	accuracy_list = []
+
+	for i in range(num_features):
+		print(f"On the {i}th level of the search tree {best_features} \n")
+		feature_set = []
+		best_accuracy = 0
+		for k in range(num_features):
+			if not k in best_features:
+				print(f"  Considering adding feature {k}")
+				accuracy = leave_one_out_cross_validation(X, Y, best_features, k)
+				print(f"  accuracy {round(accuracy,2)} \n")
+				if accuracy > best_accuracy:
+					best_accuracy = accuracy
+					best_feature = k
+
+		#best_features.add(best_feature)
+		best_features.append(best_feature)
+		accuracy_list.append(best_accuracy)
+		print(f"  On level {i}, added feature {best_feature} to the set. \n")
+
+	return best_features, accuracy_list
+	
+
 def main():
-	X, Y = get_csv_as_matrix('small_38.txt')
+	X, Y = getXY('small_38.txt')
 	X = np.array(X)
 	Y = np.array(Y).transpose()
 	Y = np.expand_dims(Y, axis=1) # convert into a (300x1) matrix instead of a (300,)
 
-	datapoint = X[random.randint(0,300)]
-	_class = classify_knn(datapoint, X, Y)
-	print("Result: ")
-	print(X[0], _class)
+	# datapoint = X[random.randint(0,300)]
+	# _class = classify_knn(datapoint, X, Y)
+	# print("Result: ")
+	# print(X[0], _class)
 
-	#showAllFeatureSingles(X, Y)
-	showAllFeaturePairs(X,Y, 10)
+	# showAllFeatureSingles(X, Y)
+	# showAllFeaturePairs(X,Y, 10)
 
-	
+	best_features, accuracy_list = feature_search_demo(X, Y)
+	best_features = map(lambda x: x+1, best_features)
+	for i, num in enumerate(accuracy_list):
+		accuracy_list[i] = round(num, 2)
+	matrix = np.array([best_features,accuracy_list]).transpose()
+	print(matrix)
+
+	plt.plot(range(10), accuracy_list, 'o-')
+	plt.xticks(range(10), best_features)
+	plt.yticks([(i)*0.1 for i in range(11)])
+	plt.xlabel("features")
+	plt.ylabel("accuracy")
+
+	for x,y in zip(range(10), accuracy_list):
+		label = "{:.2f}".format(y)
+		plt.annotate(label,
+			(x,y),
+			textcoords="offset points",
+			xytext=(0,10),
+			ha='center')
+
+	plt.show()
 
 if __name__ == '__main__':
 	main()

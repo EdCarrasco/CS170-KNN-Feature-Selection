@@ -4,6 +4,7 @@ import numpy as np
 import csv
 import random
 import math
+import keyboard
 
 def classify_knn(datapoint, X, Y, k=1):
 	_class = Y[0]
@@ -73,13 +74,15 @@ def getFeatureTriple(X, Y, f1, f2, f3):
 	return one_f1, one_f2, one_f3, two_f1, two_f2, two_f3
 
 def showAllFeatureSingles(X,Y):
-	fig, axs = plt.subplots(10, sharex=True, sharey=True)
+	num_samples, num_features = np.shape(X)
+	print(f"X num_features: {num_features}")
+	fig, axs = plt.subplots(num_features, sharex=True, sharey=True)
 	fig.suptitle("Single Feature")
-	for i in range(10):
+	for i in range(num_features):
 		one, two = getFeatureSingle(X, Y, i)
 		axs[i].plot(one, np.zeros_like(one), 'bo',  two, np.zeros_like(two), 'r.')
 	for i, ax in enumerate(axs.flat):
-		ax.set(ylabel=("f"+str(i)), xlabel="feature values")
+		ax.set(ylabel=("F"+str(i+1)), xlabel="values")
 	plt.yticks([])
 	plt.show()
 
@@ -95,7 +98,7 @@ def showAllFeaturePairs(X,Y, num_features):
 			axs[r][c].plot(two_f1, two_f2, 'r.', markersize=0.5)
 			axs[r][c].set_xlim(-3,3)
 			axs[r][c].set_ylim(-5,5)
-			axs[r][c].text(-3, -4.5, f"{i},{j}", fontsize=8)
+			axs[r][c].text(-3, -4.5, f"{i+1},{j+1}", fontsize=8)
 			c += 1
 			if c >= cols:
 				r += 1
@@ -144,54 +147,44 @@ def leave_one_out_cross_validation(X, Y, feature_indexes, potential_feature):
 	# return random.random()
 
 def feature_search_demo(X, Y):
-	num_features = np.shape(X)[1]
-	best_features = []
-	accuracy_list = []
+	num_samples, num_features = np.shape(X)
+	best_features = [] # List of features, ordered from best to worst (using greedy search based on accuracy)
+	accuracy_list = [] # List of the feature's corresponding accuracies
 
 	for i in range(num_features):
-		print(f"On the {i}th level of the search tree {best_features} \n")
-		feature_set = []
+
+		print(f"On the {i}th level of the search tree. Best features: {list(map(lambda x: x+1, best_features))} \n")
 		best_accuracy = 0
+		best_accuracy_feature = 0
 		for k in range(num_features):
+			if keyboard.is_pressed('space'):
+				showFeatureAccuracies(best_features, accuracy_list, True)
 			if not k in best_features:
-				print(f"  Considering adding feature {k}")
 				accuracy = leave_one_out_cross_validation(X, Y, best_features, k)
-				print(f"  accuracy {round(accuracy,2)} \n")
+				print(f"  Considering adding feature [{k+1}] with accuracy: {round(accuracy,2)}")
 				if accuracy > best_accuracy:
 					best_accuracy = accuracy
-					best_feature = k
+					best_accuracy_feature = k
 
-		#best_features.add(best_feature)
-		best_features.append(best_feature)
+		#best_features.add(most_accurate_feature)
+		best_features.append(best_accuracy_feature)
 		accuracy_list.append(best_accuracy)
-		print(f"  On level {i}, added feature {best_feature} to the set. \n")
+		print(f"  On the {i}th level, added feature [{best_accuracy_feature+1}] with accuracy: {round(best_accuracy, 2)} \n")
 
 	return best_features, accuracy_list
-	
 
-def main():
-	X, Y = getXY('small_38.txt')
-	X = np.array(X)
-	Y = np.array(Y).transpose()
-	Y = np.expand_dims(Y, axis=1) # convert into a (300x1) matrix instead of a (300,)
+def showFeatureAccuracies(feature_list, accuracy_list, paused=False):
+	feature_list = list(map(lambda x: x+1, feature_list))
+	accuracy_list = list(map(lambda x: round(x,2), accuracy_list))
 
-	# datapoint = X[random.randint(0,300)]
-	# _class = classify_knn(datapoint, X, Y)
-	# print("Result: ")
-	# print(X[0], _class)
-
-	# showAllFeatureSingles(X, Y)
-	# showAllFeaturePairs(X,Y, 10)
-
-	best_features, accuracy_list = feature_search_demo(X, Y)
-	best_features = map(lambda x: x+1, best_features)
-	for i, num in enumerate(accuracy_list):
-		accuracy_list[i] = round(num, 2)
-	matrix = np.array([best_features,accuracy_list]).transpose()
+	if paused:
+		print("\nPaused algorithm. Best features so far:")
+	matrix = np.array([feature_list, accuracy_list]).transpose()
 	print(matrix)
+	print()
 
-	plt.plot(range(10), accuracy_list, 'o-')
-	plt.xticks(range(10), best_features)
+	plt.plot(range(len(feature_list)), accuracy_list, 'o-')
+	plt.xticks(range(len(feature_list)), feature_list)
 	plt.yticks([(i)*0.1 for i in range(11)])
 	plt.xlabel("features")
 	plt.ylabel("accuracy")
@@ -205,6 +198,29 @@ def main():
 			ha='center')
 
 	plt.show()
+
+def main():
+	#filename = 'small_38.txt'
+	filename = 'large_40.txt'
+	X, Y = getXY(filename)
+	X = np.array(X)
+	Y = np.array(Y).transpose()
+	Y = np.expand_dims(Y, axis=1) # convert into a (300x1) matrix instead of a (300,)
+
+	f1, f2 = 44, 59
+	one_f1, one_f2, two_f1, two_f2 = getFeaturePair(X, Y, f1-1, f2-1)
+	plt.plot(one_f1, one_f2, 'b.', markersize=2)
+	plt.plot(two_f1, two_f2, 'r.', markersize=2)
+	plt.xlabel(f"Feature {f1}")
+	plt.ylabel(f"Feature {f2}")
+	plt.show()
+
+	#showAllFeatureSingles(X, Y)
+	#showAllFeaturePairs(X,Y, 10)
+
+	best_features, accuracy_list = feature_search_demo(X, Y)
+	print("Done!")
+	showFeatureAccuracies(best_features, accuracy_list)
 
 if __name__ == '__main__':
 	main()

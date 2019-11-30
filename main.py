@@ -209,8 +209,8 @@ def main():
 
 	f1, f2 = 44, 59
 	one_f1, one_f2, two_f1, two_f2 = getFeaturePair(X, Y, f1-1, f2-1)
-	plt.plot(one_f1, one_f2, 'b.', markersize=2)
-	plt.plot(two_f1, two_f2, 'r.', markersize=2)
+	plt.plot(one_f1, one_f2, 'b.', markersize=5)
+	plt.plot(two_f1, two_f2, 'r.', markersize=5)
 	plt.xlabel(f"Feature {f1}")
 	plt.ylabel(f"Feature {f2}")
 	plt.show()

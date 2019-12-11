@@ -199,21 +199,26 @@ def showFeatureAccuracies(feature_list, accuracy_list, paused=False):
 
 	plt.show()
 
-def main():
-	#filename = 'small_38.txt'
-	filename = 'large_40.txt'
-	X, Y = getXY(filename)
-	X = np.array(X)
-	Y = np.array(Y).transpose()
-	Y = np.expand_dims(Y, axis=1) # convert into a (300x1) matrix instead of a (300,)
-
-	f1, f2 = 44, 59
+def showFeaturePair(X, Y, f1, f2):
+	# f1, f2 = 44, 59
 	one_f1, one_f2, two_f1, two_f2 = getFeaturePair(X, Y, f1-1, f2-1)
 	plt.plot(one_f1, one_f2, 'b.', markersize=5)
 	plt.plot(two_f1, two_f2, 'r.', markersize=5)
 	plt.xlabel(f"Feature {f1}")
 	plt.ylabel(f"Feature {f2}")
 	plt.show()
+
+def main():
+	#filename = 'small_37.txt'
+	filename = 'small_38.txt'
+	#filename = 'large_40.txt'
+	#filename = 'large_39.txt'
+	X, Y = getXY(filename)
+	X = np.array(X)
+	Y = np.array(Y).transpose()
+	#Y = np.expand_dims(Y, axis=1) # convert into a (300x1) matrix instead of a (300,)
+
+	#showFeaturePair(X, Y, 44, 59)
 
 	#showAllFeatureSingles(X, Y)
 	#showAllFeaturePairs(X,Y, 10)
